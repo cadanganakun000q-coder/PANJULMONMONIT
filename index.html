@@ -6,6 +6,11 @@
   <title>Admin Monitoring Dashboard - Jostore</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Firebase SDK CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
@@ -21,7 +26,6 @@
 
   <div class="max-w-6xl mx-auto space-y-6">
     
-    <!-- Admin Top Bar Header -->
     <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl">
       <div class="flex items-center space-x-3">
         <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-amber-600 via-yellow-300 to-amber-700">
@@ -31,12 +35,11 @@
         </div>
         <div>
           <h1 class="text-xl font-bold gold-gradient-text">JOSTORE MONITORING</h1>
-          <p class="text-xs text-gray-400">Panel Kontrol Transaksi, Pendapatan, & Backup Data</p>
+          <p class="text-xs text-gray-400">Panel Kontrol Transaksi, Pendapatan, & Cloud Sync</p>
         </div>
       </div>
 
       <div class="flex items-center space-x-3">
-        <!-- Backup & Restore Actions -->
         <div class="flex items-center space-x-2">
           <button onclick="exportDataBackup()" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center space-x-1">
             <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Export Backup</span>
@@ -56,7 +59,6 @@
       </div>
     </div>
 
-    <!-- Revenue & Stats Overview Bar -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl flex items-center justify-between">
         <div>
@@ -79,10 +81,8 @@
       </div>
     </div>
 
-    <!-- Admin Content Grid -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-      <!-- Left Column: Active Order Monitor -->
       <div class="lg:col-span-2 space-y-6">
         <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
           <div class="flex justify-between items-center border-b border-amber-500/20 pb-3">
@@ -94,15 +94,12 @@
             </span>
           </div>
 
-          <!-- Empty State -->
           <div id="noOrderBox" class="text-center py-8 text-gray-500 space-y-2">
             <i class="fa-solid fa-inbox text-3xl"></i>
             <p class="text-xs">Belum ada buyer yang melakukan pemesanan.</p>
           </div>
 
-          <!-- Order Content -->
           <div id="activeOrderBox" class="hidden space-y-4">
-            
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#0a0a0d] p-4 rounded-xl border border-amber-500/20 text-xs">
               <div>
                 <p class="text-gray-400">Username Roblox:</p>
@@ -122,7 +119,6 @@
               </div>
             </div>
 
-            <!-- Receipt Photo -->
             <div>
               <p class="text-xs text-gray-400 mb-1">Bukti Transfer Buyer:</p>
               <div class="relative group cursor-pointer w-28 h-28 rounded-xl overflow-hidden border border-amber-500/30" onclick="zoomAdminImage('admReceiptImg')">
@@ -133,9 +129,7 @@
               </div>
             </div>
 
-            <!-- Action Buttons -->
             <div id="adminActionControls" class="pt-3 border-t border-amber-500/20 space-y-3">
-              
               <div id="secConfirmPayment">
                 <button onclick="confirmPaymentReceived()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:brightness-110 text-white font-bold py-2.5 rounded-xl text-xs transition uppercase tracking-wider">
                   <i class="fa-solid fa-check-double mr-1"></i> Konfirmasi Dana Sudah Diterima
@@ -150,13 +144,10 @@
                   <i class="fa-solid fa-upload mr-1"></i> Kirim Bukti & Selesaikan Pesanan
                 </button>
               </div>
-
             </div>
-
           </div>
         </div>
 
-        <!-- Transaction History Table Section -->
         <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
           <div class="flex justify-between items-center border-b border-amber-500/20 pb-3">
             <h2 class="text-xs font-extrabold text-amber-300/80 uppercase tracking-wider">
@@ -176,22 +167,16 @@
                   <th class="py-2 px-2">Waktu</th>
                 </tr>
               </thead>
-              <tbody id="historyTableBody" class="divide-y divide-amber-500/10 text-gray-300">
-                <!-- Populated via JS -->
-              </tbody>
+              <tbody id="historyTableBody" class="divide-y divide-amber-500/10 text-gray-300"></tbody>
             </table>
           </div>
           <div id="emptyHistoryMsg" class="text-center py-6 text-gray-500 text-xs">
             Belum ada riwayat transaksi tersimpan.
           </div>
         </div>
-
       </div>
 
-      <!-- Right Column: Settings -->
       <div class="space-y-6">
-        
-        <!-- QRIS Setting -->
         <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
           <h2 class="text-xs font-extrabold text-amber-300/80 uppercase tracking-wider border-b border-amber-500/20 pb-2">
             <i class="fa-solid fa-qrcode text-amber-400 mr-2"></i> Pengaturan QRIS
@@ -211,27 +196,22 @@
           </div>
         </div>
 
-        <!-- Prices & Services Setting -->
         <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
           <h2 class="text-xs font-extrabold text-amber-300/80 uppercase tracking-wider border-b border-amber-500/20 pb-2">
             <i class="fa-solid fa-tags text-amber-400 mr-2"></i> Harga & Status Layanan
           </h2>
 
-          <div id="admServiceSettings" class="space-y-3">
-            <!-- Populated via JS -->
-          </div>
+          <div id="admServiceSettings" class="space-y-3"></div>
 
           <button onclick="saveServiceSettings()" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 hover:brightness-110 text-gray-950 font-extrabold text-xs py-2.5 rounded-xl transition shadow-lg uppercase tracking-wider">
             Update Harga & Layanan
           </button>
         </div>
-
       </div>
 
     </div>
   </div>
 
-  <!-- Zoom Modal -->
   <div id="admModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4" onclick="closeAdminModal()">
     <div class="relative max-w-3xl w-full max-h-screen flex flex-col items-center">
       <img id="admModalTarget" src="" class="max-w-full max-h-[85vh] rounded-lg border border-amber-500/40 shadow-2xl object-contain">
@@ -239,7 +219,23 @@
   </div>
 
   <script>
-    const DEFAULT_CONFIG = {
+    // Konfigurasi Firebase Proyek Anda (jooprojek-b3600)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBPdJfg7aVgfkpYVVb8vzMFTEcdsmUFS7M",
+      authDomain: "jooprojek-b3600.firebaseapp.com",
+      projectId: "jooprojek-b3600",
+      storageBucket: "jooprojek-b3600.firebasestorage.app",
+      messagingSenderId: "269845552323",
+      appId: "1:269845552323:web:48e16ee5238181a5885676",
+      measurementId: "G-45GNG4VE7J"
+    };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    let currentConfig = {
       isStoreOnline: true,
       qrisImage: "https://via.placeholder.com/300x300?text=QRIS+Jostore+AllPayment",
       services: {
@@ -249,35 +245,33 @@
       }
     };
 
-    function getConfig() {
-      const saved = localStorage.getItem('jostore_config');
-      return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
-    }
+    let activeOrderData = null;
+    let transactionHistory = [];
 
-    function saveConfig(cfg) {
-      localStorage.setItem('jostore_config', JSON.stringify(cfg));
-      initAdminDashboard();
-    }
+    db.collection("jostore").doc("config").onSnapshot((doc) => {
+      if (doc.exists) {
+        currentConfig = doc.data();
+        initAdminDashboardUI();
+      }
+    });
 
-    function getActiveOrder() {
-      const saved = localStorage.getItem('jostore_active_order');
-      return saved ? JSON.parse(saved) : null;
-    }
+    db.collection("jostore").doc("activeOrder").onSnapshot((doc) => {
+      if (doc.exists) {
+        activeOrderData = doc.data();
+        initAdminDashboardUI();
+      }
+    });
 
-    function getTransactionHistory() {
-      const saved = localStorage.getItem('jostore_transaction_history');
-      return saved ? JSON.parse(saved) : [];
-    }
+    db.collection("jostore").doc("history").onSnapshot((doc) => {
+      if (doc.exists) {
+        transactionHistory = doc.data().items || [];
+        initAdminDashboardUI();
+      }
+    });
 
-    function saveTransactionHistory(history) {
-      localStorage.setItem('jostore_transaction_history', JSON.stringify(history));
-    }
-
-    function initAdminDashboard() {
-      const cfg = getConfig();
-
+    function initAdminDashboardUI() {
       const btnToggle = document.getElementById('btnToggleStore');
-      if (cfg.isStoreOnline) {
+      if (currentConfig.isStoreOnline) {
         btnToggle.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-green-950/40 text-green-400 border border-green-500/30";
         btnToggle.innerText = "ONLINE";
       } else {
@@ -285,13 +279,13 @@
         btnToggle.innerText = "OFFLINE";
       }
 
-      document.getElementById('admQrisPreview').src = cfg.qrisImage;
+      document.getElementById('admQrisPreview').src = currentConfig.qrisImage;
 
       const sContainer = document.getElementById('admServiceSettings');
       sContainer.innerHTML = '';
 
-      Object.keys(cfg.services).forEach(key => {
-        const s = cfg.services[key];
+      Object.keys(currentConfig.services).forEach(key => {
+        const s = currentConfig.services[key];
         const item = document.createElement('div');
         item.className = "bg-[#0a0a0d] p-3 rounded-xl border border-amber-500/20 space-y-2";
         item.innerHTML = `
@@ -310,13 +304,11 @@
         sContainer.appendChild(item);
       });
 
-      // Render Active Order
-      const order = getActiveOrder();
       const noOrderBox = document.getElementById('noOrderBox');
       const activeOrderBox = document.getElementById('activeOrderBox');
       const badge = document.getElementById('adminOrderStatusBadge');
 
-      if (!order || order.status === 'reset') {
+      if (!activeOrderData || activeOrderData.status === 'reset') {
         noOrderBox.classList.remove('hidden');
         activeOrderBox.classList.add('hidden');
         badge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-gray-800 text-gray-400";
@@ -325,26 +317,26 @@
         noOrderBox.classList.add('hidden');
         activeOrderBox.classList.remove('hidden');
 
-        document.getElementById('admUsername').innerText = order.username;
-        document.getElementById('admPassword').innerText = order.password;
-        document.getElementById('admService').innerText = order.serviceName;
-        document.getElementById('admAmount').innerText = "Rp " + order.amount.toLocaleString('id-ID');
-        document.getElementById('admReceiptImg').src = order.receiptImage;
+        document.getElementById('admUsername').innerText = activeOrderData.username;
+        document.getElementById('admPassword').innerText = activeOrderData.password;
+        document.getElementById('admService').innerText = activeOrderData.serviceName;
+        document.getElementById('admAmount').innerText = "Rp " + activeOrderData.amount.toLocaleString('id-ID');
+        document.getElementById('admReceiptImg').src = activeOrderData.receiptImage;
 
         const secConfirm = document.getElementById('secConfirmPayment');
         const secUpload = document.getElementById('secUploadProof');
 
-        if (order.status === 'pending') {
+        if (activeOrderData.status === 'pending') {
           badge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-amber-950/40 text-amber-300 border border-amber-500/30";
           badge.innerText = "Menunggu Konfirmasi Dana";
           secConfirm.classList.remove('hidden');
           secUpload.classList.add('hidden');
-        } else if (order.status === 'payment_confirmed') {
+        } else if (activeOrderData.status === 'payment_confirmed') {
           badge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-blue-950/40 text-blue-300 border border-blue-500/30";
           badge.innerText = "Proses Unlock Berjalan";
           secConfirm.classList.add('hidden');
           secUpload.classList.remove('hidden');
-        } else if (order.status === 'unlocked') {
+        } else if (activeOrderData.status === 'unlocked') {
           badge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-green-950/40 text-green-300 border border-green-500/30";
           badge.innerText = "Transaksi Selesai";
           secConfirm.classList.add('hidden');
@@ -356,7 +348,6 @@
     }
 
     function renderTransactionHistoryTable() {
-      const history = getTransactionHistory();
       const tbody = document.getElementById('historyTableBody');
       const emptyMsg = document.getElementById('emptyHistoryMsg');
       const totalRevDisplay = document.getElementById('totalRevenueDisplay');
@@ -365,11 +356,11 @@
       tbody.innerHTML = '';
       let totalRevenue = 0;
 
-      if (history.length === 0) {
+      if (transactionHistory.length === 0) {
         emptyMsg.classList.remove('hidden');
       } else {
         emptyMsg.classList.add('hidden');
-        history.slice().reverse().forEach(tx => {
+        transactionHistory.slice().reverse().forEach(tx => {
           totalRevenue += (tx.amount || 0);
           const tr = document.createElement('tr');
           tr.className = "hover:bg-amber-500/5 transition";
@@ -385,13 +376,12 @@
       }
 
       totalRevDisplay.innerText = "Rp " + totalRevenue.toLocaleString('id-ID');
-      totalTxCount.innerText = history.length;
+      totalTxCount.innerText = transactionHistory.length;
     }
 
     function toggleStoreStatus() {
-      const cfg = getConfig();
-      cfg.isStoreOnline = !cfg.isStoreOnline;
-      saveConfig(cfg);
+      currentConfig.isStoreOnline = !currentConfig.isStoreOnline;
+      db.collection("jostore").doc("config").set(currentConfig);
     }
 
     function saveNewQris() {
@@ -399,10 +389,10 @@
       if (fileInput.files && fileInput.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          const cfg = getConfig();
-          cfg.qrisImage = e.target.result;
-          saveConfig(cfg);
-          alert("Foto QRIS berhasil diperbarui!");
+          currentConfig.qrisImage = e.target.result;
+          db.collection("jostore").doc("config").set(currentConfig).then(() => {
+            alert("Foto QRIS berhasil diperbarui secara online!");
+          });
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
@@ -411,50 +401,43 @@
     }
 
     function saveServiceSettings() {
-      const cfg = getConfig();
-      Object.keys(cfg.services).forEach(key => {
+      Object.keys(currentConfig.services).forEach(key => {
         const priceInput = document.getElementById(`price_${key}`);
         const chkInput = document.getElementById(`chk_${key}`);
         if (priceInput && chkInput) {
-          cfg.services[key].price = parseInt(priceInput.value) || 0;
-          cfg.services[key].active = chkInput.checked;
+          currentConfig.services[key].price = parseInt(priceInput.value) || 0;
+          currentConfig.services[key].active = chkInput.checked;
         }
       });
-      saveConfig(cfg);
-      alert("Harga & status layanan berhasil diperbarui!");
+      db.collection("jostore").doc("config").set(currentConfig).then(() => {
+        alert("Harga & status layanan berhasil di-update secara online!");
+      });
     }
 
     function confirmPaymentReceived() {
-      const order = getActiveOrder();
-      if (order) {
-        order.status = 'payment_confirmed';
-        localStorage.setItem('jostore_active_order', JSON.stringify(order));
-        initAdminDashboard();
+      if (activeOrderData) {
+        activeOrderData.status = 'payment_confirmed';
+        db.collection("jostore").doc("activeOrder").set(activeOrderData);
       }
     }
 
     function completeUnlockTask() {
       const proofInput = document.getElementById('admProofInput');
-      const order = getActiveOrder();
-
-      if (!order) return;
+      if (!activeOrderData) return;
 
       if (proofInput.files && proofInput.files[0]) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          order.status = 'unlocked';
-          order.unlockProofImage = e.target.result;
-          order.completedAt = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+          activeOrderData.status = 'unlocked';
+          activeOrderData.unlockProofImage = e.target.result;
+          activeOrderData.completedAt = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
           
-          localStorage.setItem('jostore_active_order', JSON.stringify(order));
+          db.collection("jostore").doc("activeOrder").set(activeOrderData);
 
-          // Save to permanent transaction history
-          const history = getTransactionHistory();
-          history.push(order);
-          saveTransactionHistory(history);
-
-          initAdminDashboard();
-          alert("Bukti unlock berhasil dikirim dan transaksi otomatis masuk ke riwayat!");
+          transactionHistory.push(activeOrderData);
+          db.collection("jostore").doc("history").set({ items: transactionHistory }).then(() => {
+            alert("Bukti unlock berhasil dikirim ke buyer dan riwayat tersimpan!");
+          });
         };
         reader.readAsDataURL(proofInput.files[0]);
       } else {
@@ -464,17 +447,16 @@
 
     function clearHistory() {
       if (confirm("Apakah Anda yakin ingin menghapus seluruh riwayat transaksi?")) {
-        localStorage.removeItem('jostore_transaction_history');
-        initAdminDashboard();
+        transactionHistory = [];
+        db.collection("jostore").doc("history").set({ items: [] });
       }
     }
 
-    // Export Data Backup
     function exportDataBackup() {
       const backupData = {
-        config: getConfig(),
-        history: getTransactionHistory(),
-        activeOrder: getActiveOrder(),
+        config: currentConfig,
+        history: transactionHistory,
+        activeOrder: activeOrderData,
         exportDate: new Date().toISOString()
       };
 
@@ -487,7 +469,6 @@
       downloadAnchor.remove();
     }
 
-    // Import Data Backup
     function importDataBackup(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -496,19 +477,12 @@
       reader.onload = function(e) {
         try {
           const imported = JSON.parse(e.target.result);
-          if (imported.config) {
-            localStorage.setItem('jostore_config', JSON.stringify(imported.config));
-          }
-          if (imported.history) {
-            localStorage.setItem('jostore_transaction_history', JSON.stringify(imported.history));
-          }
-          if (imported.activeOrder) {
-            localStorage.setItem('jostore_active_order', JSON.stringify(imported.activeOrder));
-          }
-          initAdminDashboard();
-          alert("Data backup berhasil di-import!");
+          if (imported.config) db.collection("jostore").doc("config").set(imported.config);
+          if (imported.history) db.collection("jostore").doc("history").set({ items: imported.history });
+          if (imported.activeOrder) db.collection("jostore").doc("activeOrder").set(imported.activeOrder);
+          alert("Data backup berhasil di-import ke cloud!");
         } catch (err) {
-          alert("Gagal membaca file backup. Pastikan format file .json valid.");
+          alert("Gagal membaca file backup.");
         }
       };
       reader.readAsText(file);
@@ -525,14 +499,6 @@
     function closeAdminModal() {
       document.getElementById('admModal').classList.remove('modal-active');
     }
-
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'jostore_config' || e.key === 'jostore_active_order') {
-        initAdminDashboard();
-      }
-    });
-
-    window.onload = initAdminDashboard;
   </script>
 </body>
 </html>
