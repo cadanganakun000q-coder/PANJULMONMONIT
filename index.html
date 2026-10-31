@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Monitoring Dashboard - Jostore</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #f3e5ab 0%, #d4af37 50%, #996515 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .modal-active { display: flex !important; }
+  </style>
+</head>
+<body class="bg-[#0a0a0d] text-gray-100 min-h-screen p-4 md:p-8">
+
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Admin Top Bar Header -->
+    <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-2xl">
+      <div class="flex items-center space-x-3">
+        <div class="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-amber-600 via-yellow-300 to-amber-700">
+          <div class="w-full h-full bg-[#0a0a0d] rounded-full flex items-center justify-center text-amber-400 font-extrabold text-sm">
+            JS
+          </div>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold gold-gradient-text">JOSTORE MONITORING</h1>
+          <p class="text-xs text-gray-400">Panel Kontrol Transaksi, Pendapatan, & Backup Data</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <!-- Backup & Restore Actions -->
+        <div class="flex items-center space-x-2">
+          <button onclick="exportDataBackup()" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold px-3 py-2 rounded-xl transition flex items-center space-x-1">
+            <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Export Backup</span>
+          </button>
+          <label class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold px-3 py-2 rounded-xl transition cursor-pointer flex items-center space-x-1">
+            <i class="fa-solid fa-upload"></i> <span class="hidden sm:inline">Import Backup</span>
+            <input type="file" id="importFile" accept=".json" onchange="importDataBackup(event)" class="hidden">
+          </label>
+        </div>
+
+        <div class="flex items-center space-x-2 bg-[#0a0a0d] px-3 py-2 rounded-xl border border-amber-500/20">
+          <span class="text-xs font-semibold text-gray-300 hidden sm:inline">Toko:</span>
+          <button id="btnToggleStore" onclick="toggleStoreStatus()" class="px-3 py-1 rounded-full text-xs font-extrabold transition">
+            --
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue & Stats Overview Bar -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-400 font-medium uppercase tracking-wider">Total Pendapatan Keseluruhan</p>
+          <h2 id="totalRevenueDisplay" class="text-2xl font-black gold-gradient-text mt-1">Rp 0</h2>
+        </div>
+        <div class="p-3 bg-amber-500/10 rounded-xl text-amber-400 border border-amber-500/20">
+          <i class="fa-solid fa-wallet text-2xl"></i>
+        </div>
+      </div>
+
+      <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl flex items-center justify-between">
+        <div>
+          <p class="text-xs text-gray-400 font-medium uppercase tracking-wider">Total Transaksi Selesai</p>
+          <h2 id="totalTxCount" class="text-2xl font-black text-white mt-1">0</h2>
+        </div>
+        <div class="p-3 bg-amber-500/10 rounded-xl text-amber-400 border border-amber-500/20">
+          <i class="fa-solid fa-receipt text-2xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Left Column: Active Order Monitor -->
+      <div class="lg:col-span-2 space-y-6">
+        <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex justify-between items-center border-b border-amber-500/20 pb-3">
+            <h2 class="text-xs font-extrabold text-amber-300/80 uppercase tracking-wider">
+              <i class="fa-solid fa-bell text-amber-400 mr-2"></i> Transaksi Masuk Buyer
+            </h2>
+            <span id="adminOrderStatusBadge" class="text-xs px-2.5 py-1 rounded-full font-bold bg-gray-800 text-gray-400">
+              Tidak Ada Transaksi
+            </span>
+          </div>
+
+          <!-- Empty State -->
+          <div id="noOrderBox" class="text-center py-8 text-gray-500 space-y-2">
+            <i class="fa-solid fa-inbox text-3xl"></i>
+            <p class="text-xs">Belum ada buyer yang melakukan pemesanan.</p>
+          </div>
+
+          <!-- Order Content -->
+          <div id="activeOrderBox" class="hidden space-y-4">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#0a0a0d] p-4 rounded-xl border border-amber-500/20 text-xs">
+              <div>
+                <p class="text-gray-400">Username Roblox:</p>
+                <p id="admUsername" class="font-bold text-amber-300 text-sm">--</p>
+              </div>
+              <div>
+                <p class="text-gray-400">Password Roblox:</p>
+                <p id="admPassword" class="font-mono text-yellow-400 text-sm">--</p>
+              </div>
+              <div>
+                <p class="text-gray-400">Layanan Dipilih:</p>
+                <p id="admService" class="font-semibold text-white">--</p>
+              </div>
+              <div>
+                <p class="text-gray-400">Total Tagihan:</p>
+                <p id="admAmount" class="font-bold gold-gradient-text text-sm">--</p>
+              </div>
+            </div>
+
+            <!-- Receipt Photo -->
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Bukti Transfer Buyer:</p>
+              <div class="relative group cursor-pointer w-28 h-28 rounded-xl overflow-hidden border border-amber-500/30" onclick="zoomAdminImage('admReceiptImg')">
+                <img id="admReceiptImg" src="" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-amber-300 text-xs font-semibold">
+                  <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div id="adminActionControls" class="pt-3 border-t border-amber-500/20 space-y-3">
+              
+              <div id="secConfirmPayment">
+                <button onclick="confirmPaymentReceived()" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:brightness-110 text-white font-bold py-2.5 rounded-xl text-xs transition uppercase tracking-wider">
+                  <i class="fa-solid fa-check-double mr-1"></i> Konfirmasi Dana Sudah Diterima
+                </button>
+              </div>
+
+              <div id="secUploadProof" class="hidden space-y-3 bg-[#0a0a0d] p-3 rounded-xl border border-amber-500/20">
+                <label class="block text-xs font-semibold text-amber-300/80">Upload Bukti Screenshot Akun Berhasil Di-Unlock:</label>
+                <input type="file" id="admProofInput" accept="image/*" class="block w-full text-xs text-gray-400 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-500/20 file:text-amber-300 bg-[#121218] rounded-lg border border-amber-500/20">
+                
+                <button onclick="completeUnlockTask()" class="w-full bg-gradient-to-r from-amber-600 to-yellow-500 hover:brightness-110 text-gray-950 font-extrabold py-2.5 rounded-xl text-xs transition uppercase tracking-wider">
+                  <i class="fa-solid fa-upload mr-1"></i> Kirim Bukti & Selesaikan Pesanan
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Transaction History Table Section -->
+        <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
+          <div class="flex justify-between items-center border-b border-amber-500/20 pb-3">
+            <h2 class="text-xs font-extrabold text-amber-300/80 uppercase tracking-wider">
+              <i class="fa-solid fa-clock-rotate-left text-amber-400 mr-2"></i> Riwayat Transaksi Selesai
+            </h2>
+            <button onclick="clearHistory()" class="text-[10px] text-red-400 hover:underline">Hapus Riwayat</button>
+          </div>
+
+          <div class="overflow-x-auto max-h-72">
+            <table class="w-full text-left text-xs">
+              <thead class="text-gray-400 border-b border-amber-500/10">
+                <tr>
+                  <th class="py-2 px-2">ID</th>
+                  <th class="py-2 px-2">Username</th>
+                  <th class="py-2 px-2">Layanan</th>
+                  <th class="py-2 px-2">Nominal</th>
+                  <th class="py-2 px-2">Waktu</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody" class="divide-y divide-amber-500/10 text-gray-300">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+          <div id="emptyHistoryMsg" class="text-center py-6 text-gray-500 text-xs">
+            Belum ada riwayat transaksi tersimpan.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Settings -->
+      <div class="space-y-6">
+        
+        <!-- QRIS Setting -->
+        <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
+          <h2 class="text-xs font-extrabold text-amber-300/80 uppercase tracking-wider border-b border-amber-500/20 pb-2">
+            <i class="fa-solid fa-qrcode text-amber-400 mr-2"></i> Pengaturan QRIS
+          </h2>
+
+          <div class="text-center space-y-3">
+            <img id="admQrisPreview" src="" class="w-32 h-32 object-contain mx-auto rounded-lg border border-amber-500/30 bg-[#0a0a0d] p-1">
+            
+            <div class="text-left space-y-1">
+              <span class="text-[11px] text-gray-400">Ganti Foto QRIS Pembayaran:</span>
+              <input type="file" id="admQrisInput" accept="image/*" class="block w-full text-xs text-gray-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-amber-500/20 file:text-amber-300 bg-[#0a0a0d] rounded-lg border border-amber-500/20">
+            </div>
+
+            <button onclick="saveNewQris()" class="w-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold py-2 rounded-xl transition">
+              Simpan Foto QRIS
+            </button>
+          </div>
+        </div>
+
+        <!-- Prices & Services Setting -->
+        <div class="bg-[#121218] border border-amber-500/30 rounded-2xl p-5 shadow-xl space-y-4">
+          <h2 class="text-xs font-extrabold text-amber-300/80 uppercase tracking-wider border-b border-amber-500/20 pb-2">
+            <i class="fa-solid fa-tags text-amber-400 mr-2"></i> Harga & Status Layanan
+          </h2>
+
+          <div id="admServiceSettings" class="space-y-3">
+            <!-- Populated via JS -->
+          </div>
+
+          <button onclick="saveServiceSettings()" class="w-full bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 hover:brightness-110 text-gray-950 font-extrabold text-xs py-2.5 rounded-xl transition shadow-lg uppercase tracking-wider">
+            Update Harga & Layanan
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Zoom Modal -->
+  <div id="admModal" class="fixed inset-0 bg-black/90 z-50 hidden items-center justify-center p-4" onclick="closeAdminModal()">
+    <div class="relative max-w-3xl w-full max-h-screen flex flex-col items-center">
+      <img id="admModalTarget" src="" class="max-w-full max-h-[85vh] rounded-lg border border-amber-500/40 shadow-2xl object-contain">
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_CONFIG = {
+      isStoreOnline: true,
+      qrisImage: "https://via.placeholder.com/300x300?text=QRIS+Jostore+AllPayment",
+      services: {
+        beranda: { name: "Unlock Captcha Home / Beranda", price: 15000, active: true },
+        ingame: { name: "Captcha In Game", price: 20000, active: true },
+        facelock: { name: "Facelock / Verifikasi Wajah", price: 35000, active: true }
+      }
+    };
+
+    function getConfig() {
+      const saved = localStorage.getItem('jostore_config');
+      return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+    }
+
+    function saveConfig(cfg) {
+      localStorage.setItem('jostore_config', JSON.stringify(cfg));
+      initAdminDashboard();
+    }
+
+    function getActiveOrder() {
+      const saved = localStorage.getItem('jostore_active_order');
+      return saved ? JSON.parse(saved) : null;
+    }
+
+    function getTransactionHistory() {
+      const saved = localStorage.getItem('jostore_transaction_history');
+      return saved ? JSON.parse(saved) : [];
+    }
+
+    function saveTransactionHistory(history) {
+      localStorage.setItem('jostore_transaction_history', JSON.stringify(history));
+    }
+
+    function initAdminDashboard() {
+      const cfg = getConfig();
+
+      const btnToggle = document.getElementById('btnToggleStore');
+      if (cfg.isStoreOnline) {
+        btnToggle.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-green-950/40 text-green-400 border border-green-500/30";
+        btnToggle.innerText = "ONLINE";
+      } else {
+        btnToggle.className = "px-3 py-1 rounded-full text-xs font-extrabold bg-red-950/40 text-red-400 border border-red-500/30";
+        btnToggle.innerText = "OFFLINE";
+      }
+
+      document.getElementById('admQrisPreview').src = cfg.qrisImage;
+
+      const sContainer = document.getElementById('admServiceSettings');
+      sContainer.innerHTML = '';
+
+      Object.keys(cfg.services).forEach(key => {
+        const s = cfg.services[key];
+        const item = document.createElement('div');
+        item.className = "bg-[#0a0a0d] p-3 rounded-xl border border-amber-500/20 space-y-2";
+        item.innerHTML = `
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-semibold text-gray-200">${s.name}</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="chk_${key}" ${s.active ? 'checked' : ''} class="sr-only peer">
+              <div class="w-8 h-4 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-amber-500"></div>
+            </label>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs text-amber-400 font-bold">Rp</span>
+            <input type="number" id="price_${key}" value="${s.price}" class="w-full bg-[#121218] border border-amber-500/20 rounded-lg px-2 py-1 text-xs text-white">
+          </div>
+        `;
+        sContainer.appendChild(item);
+      });
+
+      // Render Active Order
+      const order = getActiveOrder();
+      const noOrderBox = document.getElementById('noOrderBox');
+      const activeOrderBox = document.getElementById('activeOrderBox');
+      const badge = document.getElementById('adminOrderStatusBadge');
+
+      if (!order || order.status === 'reset') {
+        noOrderBox.classList.remove('hidden');
+        activeOrderBox.classList.add('hidden');
+        badge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-gray-800 text-gray-400";
+        badge.innerText = "Tidak Ada Transaksi";
+      } else {
+        noOrderBox.classList.add('hidden');
+        activeOrderBox.classList.remove('hidden');
+
+        document.getElementById('admUsername').innerText = order.username;
+        document.getElementById('admPassword').innerText = order.password;
+        document.getElementById('admService').innerText = order.serviceName;
+        document.getElementById('admAmount').innerText = "Rp " + order.amount.toLocaleString('id-ID');
+        document.getElementById('admReceiptImg').src = order.receiptImage;
+
+        const secConfirm = document.getElementById('secConfirmPayment');
+        const secUpload = document.getElementById('secUploadProof');
+
+        if (order.status === 'pending') {
+          badge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-amber-950/40 text-amber-300 border border-amber-500/30";
+          badge.innerText = "Menunggu Konfirmasi Dana";
+          secConfirm.classList.remove('hidden');
+          secUpload.classList.add('hidden');
+        } else if (order.status === 'payment_confirmed') {
+          badge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-blue-950/40 text-blue-300 border border-blue-500/30";
+          badge.innerText = "Proses Unlock Berjalan";
+          secConfirm.classList.add('hidden');
+          secUpload.classList.remove('hidden');
+        } else if (order.status === 'unlocked') {
+          badge.className = "text-xs px-2.5 py-1 rounded-full font-bold bg-green-950/40 text-green-300 border border-green-500/30";
+          badge.innerText = "Transaksi Selesai";
+          secConfirm.classList.add('hidden');
+          secUpload.classList.add('hidden');
+        }
+      }
+
+      renderTransactionHistoryTable();
+    }
+
+    function renderTransactionHistoryTable() {
+      const history = getTransactionHistory();
+      const tbody = document.getElementById('historyTableBody');
+      const emptyMsg = document.getElementById('emptyHistoryMsg');
+      const totalRevDisplay = document.getElementById('totalRevenueDisplay');
+      const totalTxCount = document.getElementById('totalTxCount');
+
+      tbody.innerHTML = '';
+      let totalRevenue = 0;
+
+      if (history.length === 0) {
+        emptyMsg.classList.remove('hidden');
+      } else {
+        emptyMsg.classList.add('hidden');
+        history.slice().reverse().forEach(tx => {
+          totalRevenue += (tx.amount || 0);
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-amber-500/5 transition";
+          tr.innerHTML = `
+            <td class="py-2.5 px-2 font-mono text-amber-400">${tx.id || 'ORD-xxx'}</td>
+            <td class="py-2.5 px-2 font-semibold text-white">${tx.username}</td>
+            <td class="py-2.5 px-2 text-gray-300">${tx.serviceName}</td>
+            <td class="py-2.5 px-2 font-bold text-green-400">Rp ${(tx.amount || 0).toLocaleString('id-ID')}</td>
+            <td class="py-2.5 px-2 text-gray-400 text-[10px]">${tx.completedAt || '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      totalRevDisplay.innerText = "Rp " + totalRevenue.toLocaleString('id-ID');
+      totalTxCount.innerText = history.length;
+    }
+
+    function toggleStoreStatus() {
+      const cfg = getConfig();
+      cfg.isStoreOnline = !cfg.isStoreOnline;
+      saveConfig(cfg);
+    }
+
+    function saveNewQris() {
+      const fileInput = document.getElementById('admQrisInput');
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const cfg = getConfig();
+          cfg.qrisImage = e.target.result;
+          saveConfig(cfg);
+          alert("Foto QRIS berhasil diperbarui!");
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        alert("Pilih file foto QRIS terlebih dahulu.");
+      }
+    }
+
+    function saveServiceSettings() {
+      const cfg = getConfig();
+      Object.keys(cfg.services).forEach(key => {
+        const priceInput = document.getElementById(`price_${key}`);
+        const chkInput = document.getElementById(`chk_${key}`);
+        if (priceInput && chkInput) {
+          cfg.services[key].price = parseInt(priceInput.value) || 0;
+          cfg.services[key].active = chkInput.checked;
+        }
+      });
+      saveConfig(cfg);
+      alert("Harga & status layanan berhasil diperbarui!");
+    }
+
+    function confirmPaymentReceived() {
+      const order = getActiveOrder();
+      if (order) {
+        order.status = 'payment_confirmed';
+        localStorage.setItem('jostore_active_order', JSON.stringify(order));
+        initAdminDashboard();
+      }
+    }
+
+    function completeUnlockTask() {
+      const proofInput = document.getElementById('admProofInput');
+      const order = getActiveOrder();
+
+      if (!order) return;
+
+      if (proofInput.files && proofInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          order.status = 'unlocked';
+          order.unlockProofImage = e.target.result;
+          order.completedAt = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+          
+          localStorage.setItem('jostore_active_order', JSON.stringify(order));
+
+          // Save to permanent transaction history
+          const history = getTransactionHistory();
+          history.push(order);
+          saveTransactionHistory(history);
+
+          initAdminDashboard();
+          alert("Bukti unlock berhasil dikirim dan transaksi otomatis masuk ke riwayat!");
+        };
+        reader.readAsDataURL(proofInput.files[0]);
+      } else {
+        alert("Harap upload foto bukti unlock terlebih dahulu.");
+      }
+    }
+
+    function clearHistory() {
+      if (confirm("Apakah Anda yakin ingin menghapus seluruh riwayat transaksi?")) {
+        localStorage.removeItem('jostore_transaction_history');
+        initAdminDashboard();
+      }
+    }
+
+    // Export Data Backup
+    function exportDataBackup() {
+      const backupData = {
+        config: getConfig(),
+        history: getTransactionHistory(),
+        activeOrder: getActiveOrder(),
+        exportDate: new Date().toISOString()
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `jostore_backup_${Date.now()}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    // Import Data Backup
+    function importDataBackup(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.config) {
+            localStorage.setItem('jostore_config', JSON.stringify(imported.config));
+          }
+          if (imported.history) {
+            localStorage.setItem('jostore_transaction_history', JSON.stringify(imported.history));
+          }
+          if (imported.activeOrder) {
+            localStorage.setItem('jostore_active_order', JSON.stringify(imported.activeOrder));
+          }
+          initAdminDashboard();
+          alert("Data backup berhasil di-import!");
+        } catch (err) {
+          alert("Gagal membaca file backup. Pastikan format file .json valid.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function zoomAdminImage(imgId) {
+      const src = document.getElementById(imgId).src;
+      if (src) {
+        document.getElementById('admModalTarget').src = src;
+        document.getElementById('admModal').classList.add('modal-active');
+      }
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admModal').classList.remove('modal-active');
+    }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'jostore_config' || e.key === 'jostore_active_order') {
+        initAdminDashboard();
+      }
+    });
+
+    window.onload = initAdminDashboard;
+  </script>
+</body>
+</html>
